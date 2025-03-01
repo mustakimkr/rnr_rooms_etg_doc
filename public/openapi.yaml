@@ -57,6 +57,7 @@ info:
     | 1013        | The price of the rate has already been changed. |
     | 4000        | Various field validation error messages. |
     | 4001        | Authentication related errors. |
+    | 4002        | Request Timeout |
     | 5000        | An internal server error has occurred.  |
 
     ## Authentication
@@ -1393,3 +1394,7 @@ components:
       value:
         code: 1000
         message: The specified hotel does not exist in the system.
+servers:
+  - url: https://api.rnrrooms.com/api-b2b/v1/lodging/etg
+    variables: {}
+    description: Live Server
