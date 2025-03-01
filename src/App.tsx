@@ -7,7 +7,7 @@ function App() {
     <>
       <nav className="navbar">
         <img className="logo" src="rnr_rooms_logo_white.svg" alt="logo" />
-        <h3>ETG API Specification</h3>
+        <h3>ETG API Specification v1</h3>
       </nav>
       <SwaggerUI url="./openapi.yaml" />
     </>

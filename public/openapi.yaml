@@ -1,10 +1,10 @@
 openapi: 3.0.0
 info:
-  title: Provider API
-  version: '1.9'
+  title: Lodging API for ETG
+  version: "1.0"
   description: |
     ## Overview
-      Provider API is a universal protocol for distributor for a real time connection to the hotel provider's system.<br>
+      The Lodging API is a universal protocol for ETG to establish real-time connections with the RNR ROOMS system.<br>
 
       This API enables to:
       <ul>
@@ -15,50 +15,57 @@ info:
 
     ## Restrictions
 
-      In order to prevent invalid requests leading to unavailability on the provider's side, the provider should specify the following API restrictions:
-      1. Maximum number of rooms per request.
-      2. Maximum number of adults per room.
-      3. Maximum number of children per room.
-      4. Maximum number of total amount of guests per room.
-      5. Maximum booking window.
-      6. Maximum nights.
-      7. Maximum number of hotels per request.
+     To ensure system stability and prevent invalid requests that could lead to service disruptions, the provider enforces the following API restrictions:
+      1. Maximum number of rooms per request: **9**
+      2. Maximum number of adults per room: **6**
+      3. Maximum number of children per room: **6**
+      4. Maximum number of total amount of guests per room: **10**
+      5. Maximum booking window: : **365 days**
+      6. Maximum nights: **31**
+      7. Maximum number of hotels per request: **100**
 
-      The provider should convert children to adults regarding of their age and max child age restrictions on their side and return correct availability accordingly.
+      The provider converts children to adults based on age restrictions and maximum child age rules before returning availability.
 
-      Cancellation policy rules must be sent in UTC timezone. (in /search and /search/{hotel_id} methods).
+      Cancellation policy rules sent in UTC timezone. (in /search and /search/{hotel_id} methods).
 
-      Maximum timeouts allowed:
-      1. 10-20 seconds on search
+      Maximum timeouts:
+      1. 18 seconds on search
       2. 60 seconds on book
 
     ## Identifiers
-
-      The size of identifiers should be restricted to assist client and server applications in planning resource consumption.<br>
-
-      We suggest establishing the following limits on the sizes of identifiers:
       - Rate ID - 128 bytes
       - Other IDs - 64 bytes
 
     ## Errors
+    The following table lists all possible error codes and their corresponding messages:
 
-      Error codes must be from a distinct list of possible values.
-      This list should be a part of final specification from the supplier.
+    | Code | Message |
+    |------------|--------------------------------|
+    | 1000        | The specified hotel does not exist in the system. |
+    | 1001        | Check-out date cannot be before check-in date. |
+    | 1002        | Check-in date cannot be in the past. |
+    | 1003        | Maximum 10 guests are allowed per room. |
+    | 1004        | Maximum 31 nights are allowed. |
+    | 1005        | Maximum booking window is 365 days. |
+    | 1006        | The specified rate does not exist in the system. |
+    | 1007        | Unable to book room. |
+    | 1008        | The specified reservation does not exist in the system. |
+    | 1009        | The invoice is closed, reservation cannot be canceled. |
+    | 1010        | The reservation has already been cancelled. |
+    | 1011        | Unable to cancel room. |
+    | 1012        | You cannot cancel the reservation after check-in. |
+    | 1013        | The price of the rate has already been changed. |
+    | 4000        | Various field validation error messages. |
+    | 4001        | Authentication related errors. |
+    | 5000        | An internal server error has occurred.  |
 
     ## Authentication
-      Provider API should use HTTP Basic Authentication (Basic Auth).<br>
-      Username and password can be acquired from a provider itself.<br>
+      HTTP Basic Authentication (Basic Auth) is required.<br>
+      Username and password will be provided during onboarding.<br>
 
       Here is an example of the HTTP request header: <br>
       <b><i>Authorization: Basic bG9sOnNlY3VyZQ== <br></i></b>
       where bG9sOnNlY3VyZQ== is a base64 encoded string username:password.
-
-    ## Recommendations
-    <ul>
-      <li>The provider should keep in mind that this API might have another version and use of version tags (/v1/) in paths is highly recommended.</li>
-      <li>Keep error messages short, distinctive and self explanatory.</li>
-      <li>If the crucial information about the hotel (such as name, coordinates, address) is changed, the new ID have to be created for this hotel to prevent mapping issues.</li>
-    </ul>
 paths:
   /hotels:
     get:
@@ -68,12 +75,12 @@ paths:
       security:
         - BasicAuth: []
       responses:
-        '200':
+        "200":
           description: >
             Hotels static data information in [Newline-delimited JSON
             (ndjson)](https://en.wikipedia.org/wiki/JSON_streaming) format
-            compressed with gzip.<br><br> Data for each hotel should have a
-            [HotelStatic]() schema and should be in English.<br><br>
+            compressed with gzip.<br><br> Data for each hotel will have a
+            [HotelStatic]() schema and will be in English.<br><br>
 
             <b>Attention</b> The OpenAPI spec does not support the NDJSON
             format; that's why the example value and schema are shown as an
@@ -87,16 +94,16 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/HotelStatic'
+                  $ref: "#/components/schemas/HotelStatic"
           headers:
             Content-Encoding:
               schema:
                 type: string
               description: gzip
               required: true
-        '401':
+        "401":
           description: The request is unauthorized.
-        '500':
+        "500":
           description: Internal server error.
   /meals:
     get:
@@ -106,14 +113,14 @@ paths:
       security:
         - BasicAuth: []
       responses:
-        '200':
+        "200":
           description: Meals static data information.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Meal'
+                  $ref: "#/components/schemas/Meal"
               example:
                 - id: super-all-inclusive
                   name: Super all-inclusive
@@ -123,9 +130,9 @@ paths:
                   name: Breakfast, lunch and dinner included
                 - id: dinner
                   name: Dinner
-        '401':
+        "401":
           description: The request is unauthorized.
-        '500':
+        "500":
           description: Internal server error.
   /search:
     post:
@@ -143,7 +150,7 @@ paths:
           application/json:
             schema:
               allOf:
-                - $ref: '#/components/schemas/BaseSearchRequest'
+                - $ref: "#/components/schemas/BaseSearchRequest"
                 - type: object
                 - required:
                     - hotel_ids
@@ -151,14 +158,14 @@ paths:
                     hotel_ids:
                       type: array
                       items:
-                        $ref: '#/components/schemas/HotelID'
+                        $ref: "#/components/schemas/HotelID"
             examples:
               singleroom:
-                $ref: '#/components/examples/SingleroomSearchRequest'
+                $ref: "#/components/examples/SingleroomSearchRequest"
               multiroom:
-                $ref: '#/components/examples/MultiroomSearchRequest'
+                $ref: "#/components/examples/MultiroomSearchRequest"
       responses:
-        '200':
+        "200":
           description: >
             A list of hotels along with available booking rates.<br> If there is
             no availability, the response should contain an empty array.
@@ -167,34 +174,34 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Hotel'
+                  $ref: "#/components/schemas/Hotel"
               examples:
                 SingleRoom:
-                  $ref: '#/components/examples/SignleroomSearchResponse'
+                  $ref: "#/components/examples/SignleroomSearchResponse"
                 Multiroom:
-                  $ref: '#/components/examples/MultiroomSearchResponse'
-        '400':
+                  $ref: "#/components/examples/MultiroomSearchResponse"
+        "400":
           description: Bad Request.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 InvalidDates:
-                  $ref: '#/components/examples/InvalidDates'
+                  $ref: "#/components/examples/InvalidDates"
                 InvalidResidency:
-                  $ref: '#/components/examples/InvalidResidency'
+                  $ref: "#/components/examples/InvalidResidency"
                 InvalidGuests:
-                  $ref: '#/components/examples/InvalidGuests'
+                  $ref: "#/components/examples/InvalidGuests"
                 ExceededAdultsCount:
-                  $ref: '#/components/examples/ExceededAdultsCount'
+                  $ref: "#/components/examples/ExceededAdultsCount"
                 ExceededChildrenCount:
-                  $ref: '#/components/examples/ExceededChildrenCount'
+                  $ref: "#/components/examples/ExceededChildrenCount"
                 ExceededRooms:
-                  $ref: '#/components/examples/ExceededRooms'
-        '401':
+                  $ref: "#/components/examples/ExceededRooms"
+        "401":
           description: The request is unauthorized.
-        '500':
+        "500":
           description: Internal server error.
   /search/{hotel_id}:
     post:
@@ -203,7 +210,7 @@ paths:
           name: hotel_id
           required: true
           schema:
-            $ref: '#/components/schemas/HotelID'
+            $ref: "#/components/schemas/HotelID"
       tags:
         - search
       summary: Search for available rates in one hotel.
@@ -217,44 +224,44 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BaseSearchRequest'
+              $ref: "#/components/schemas/BaseSearchRequest"
       responses:
-        '200':
+        "200":
           description: Available booking rates with its up-to-date information.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Rate'
-        '400':
+                  $ref: "#/components/schemas/Rate"
+        "400":
           description: Bad Request.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 InvalidDates:
-                  $ref: '#/components/examples/InvalidDates'
+                  $ref: "#/components/examples/InvalidDates"
                 InvalidResidency:
-                  $ref: '#/components/examples/InvalidResidency'
+                  $ref: "#/components/examples/InvalidResidency"
                 InvalidGuests:
-                  $ref: '#/components/examples/InvalidGuests'
+                  $ref: "#/components/examples/InvalidGuests"
                 ExceededAdultsCount:
-                  $ref: '#/components/examples/ExceededAdultsCount'
+                  $ref: "#/components/examples/ExceededAdultsCount"
                 ExceededChildrenCount:
-                  $ref: '#/components/examples/ExceededChildrenCount'
+                  $ref: "#/components/examples/ExceededChildrenCount"
                 ExceededRooms:
-                  $ref: '#/components/examples/ExceededRooms'
-        '404':
+                  $ref: "#/components/examples/ExceededRooms"
+        "404":
           description: Not found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 HotelNotFound:
-                  $ref: '#/components/examples/HotelNotFound'
+                  $ref: "#/components/examples/HotelNotFound"
   /book:
     post:
       tags:
@@ -278,15 +285,15 @@ paths:
                 - rooms
               properties:
                 hotel_id:
-                  $ref: '#/components/schemas/HotelID'
+                  $ref: "#/components/schemas/HotelID"
                 rate_id:
-                  $ref: '#/components/schemas/RateID'
+                  $ref: "#/components/schemas/RateID"
                 client_reference_id:
-                  $ref: '#/components/schemas/ClientReferenceID'
+                  $ref: "#/components/schemas/ClientReferenceID"
                 reservation_holder:
-                  $ref: '#/components/schemas/Guest'
+                  $ref: "#/components/schemas/Guest"
                 contact_info:
-                  $ref: '#/components/schemas/ContactInfo'
+                  $ref: "#/components/schemas/ContactInfo"
                 price:
                   description: Total price of the rate.
                   type: number
@@ -309,21 +316,21 @@ paths:
                         - Other
                     number:
                       type: string
-                      example: '1234567890123457'
+                      example: "1234567890123457"
                     holder:
                       type: string
                       example: James Smith
                     expiration_date:
                       type: string
-                      example: '0422'
+                      example: "0422"
                     security_code:
                       type: string
-                      example: '123'
+                      example: "123"
                 rooms:
                   description: A list of rooms to book.
                   type: array
                   items:
-                    $ref: '#/components/schemas/BookRoom'
+                    $ref: "#/components/schemas/BookRoom"
                 comments:
                   description: >
                     Additional comments for the reservation from the reservation
@@ -333,11 +340,11 @@ paths:
                   example: Non-smoking room, first floor.
             examples:
               singleroom:
-                $ref: '#/components/examples/SingleroomBookRequest'
+                $ref: "#/components/examples/SingleroomBookRequest"
               multiroom:
-                $ref: '#/components/examples/MultiroomBookRequest'
+                $ref: "#/components/examples/MultiroomBookRequest"
       responses:
-        '200':
+        "200":
           description: >-
             The reservation request has been successfully processed.  Please
             note that a successful request does not mean that the booking has
@@ -347,50 +354,50 @@ paths:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/ReservationCodesRS'
-                  - $ref: '#/components/schemas/ReservationStatus'
+                  - $ref: "#/components/schemas/ReservationCodesRS"
+                  - $ref: "#/components/schemas/ReservationStatus"
               examples:
                 SingleRoom:
-                  $ref: '#/components/examples/SingleroomBookResponse'
+                  $ref: "#/components/examples/SingleroomBookResponse"
                 Multiroom:
-                  $ref: '#/components/examples/MultiroomBookResponse'
-        '400':
+                  $ref: "#/components/examples/MultiroomBookResponse"
+        "400":
           description: Bad Request.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 InvalidClientReferenceID:
                   summary: Invalid client_reference_id.
                   value:
-                    code: 7
+                    code: 4000
                     message: The client reference contains more than 36 symbols.
                 InvalidReservationHolderLastName:
                   summary: Empty reservation holder's last name.
                   value:
-                    code: 8
+                    code: 4000
                     message: The last name of the reservation holder is missing.
                 InvalidReservationHolderFirstName:
                   summary: Empty reservation holder's first name.
                   value:
-                    code: 8
+                    code: 4000
                     message: The first name of the reservation holder is missing.
                 InvalidEmail:
                   summary: Invalid email in contact info.
                   value:
-                    code: 9
+                    code: 4000
                     message: The email of the reservation holder is invalid.
                 PriceHasBeenChanged:
                   summary: Change of price.
                   value:
-                    code: 10
+                    code: 1013
                     message: The price of the rate has already been changed.
-        '401':
+        "401":
           description: The request is unauthorized.
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
           description: Internal server error.
   /status:
     post:
@@ -404,35 +411,35 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ReservationCodesRQ'
+              $ref: "#/components/schemas/ReservationCodesRQ"
       responses:
-        '200':
+        "200":
           description: Detailed information about the reservation.
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/ReservationCodesRS'
-                  - $ref: '#/components/schemas/ReservationStatus'
-                  - $ref: '#/components/schemas/StayRange'
+                  - $ref: "#/components/schemas/ReservationCodesRS"
+                  - $ref: "#/components/schemas/ReservationStatus"
+                  - $ref: "#/components/schemas/StayRange"
                   - type: object
                     properties:
                       reservation_holder:
-                        $ref: '#/components/schemas/Guest'
+                        $ref: "#/components/schemas/Guest"
                       contact_info:
-                        $ref: '#/components/schemas/ContactInfo'
+                        $ref: "#/components/schemas/ContactInfo"
                       hotel_id:
-                        $ref: '#/components/schemas/HotelID'
+                        $ref: "#/components/schemas/HotelID"
                       hotel_name:
                         type: string
                         example: Almond Holiday Village
                       rate:
-                        $ref: '#/components/schemas/Rate'
-        '401':
+                        $ref: "#/components/schemas/Rate"
+        "401":
           description: The request is unauthorized.
-        '404':
-          $ref: '#/components/responses/NotFoundReservation'
-        '500':
+        "404":
+          $ref: "#/components/responses/NotFoundReservation"
+        "500":
           description: Internal server error.
   /cancel:
     post:
@@ -446,9 +453,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ReservationCodesRQ'
+              $ref: "#/components/schemas/ReservationCodesRQ"
       responses:
-        '200':
+        "200":
           description: >-
             Cancellation request has been successfully processed.  Please note
             that a successful request does not mean that the booking has been
@@ -457,37 +464,37 @@ paths:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/ReservationCodesRS'
-                  - $ref: '#/components/schemas/ReservationStatus'
-        '400':
+                  - $ref: "#/components/schemas/ReservationCodesRS"
+                  - $ref: "#/components/schemas/ReservationStatus"
+        "400":
           description: Bad Request.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 CancelAfterCheckin:
                   summary: Cancel after check-in.
                   value:
-                    code: 11
+                    code: 1012
                     message: You cannot cancel the reservation after check-in.
-        '401':
+        "401":
           description: The request is unauthorized.
-        '404':
-          $ref: '#/components/responses/NotFoundReservation'
-        '409':
+        "404":
+          $ref: "#/components/responses/NotFoundReservation"
+        "409":
           description: Already cancelled
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 AlreadyCancelled:
                   summary: Already been cancelled.
                   value:
-                    code: 11
+                    code: 1010
                     message: The reservation has already been cancelled.
-        '500':
+        "500":
           description: Internal server error.
 components:
   securitySchemes:
@@ -500,23 +507,23 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
           examples:
             HotelNotFound:
-              $ref: '#/components/examples/HotelNotFound'
+              $ref: "#/components/examples/HotelNotFound"
             RateNotFound:
               summary: Rate doesn't exist.
               value:
-                code: 2
+                code: 1006
                 message: The specified rate does not exist in the system.
     NotFoundReservation:
       description: Not found.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
           example:
-            code: 3
+            code: 1008
             message: The specified reservation does not exist in the system.
   schemas:
     Error:
@@ -540,7 +547,7 @@ components:
         - address
       properties:
         id:
-          $ref: '#/components/schemas/HotelID'
+          $ref: "#/components/schemas/HotelID"
         name:
           type: string
           description: Hotel's name
@@ -578,18 +585,18 @@ components:
         address:
           type: string
           description: Full hotel's address.
-          example: 'Bademli Sok. No: 1, Alsancak, Cyprus'
+          example: "Bademli Sok. No: 1, Alsancak, Cyprus"
         postal_code:
           nullable: true
           type: string
-          example: '99000'
+          example: "99000"
         contacts:
           nullable: true
           type: object
           properties:
             phone:
               type: string
-              example: '+1234567890'
+              example: "+1234567890"
             email:
               type: string
               example: hotel@gmail.com
@@ -618,14 +625,14 @@ components:
               nullable: true
               type: string
               description: ID of the certificate that confirms the star rating.
-              example: '1234'
+              example: "1234"
             expiration_date:
               type: string
               format: date
               description: >-
                 Expiration date of the certificate that confirms the star
                 rating.
-              example: '2022-10-01'
+              example: "2022-10-01"
         important_info:
           nullable: true
           type: string
@@ -639,22 +646,22 @@ components:
           nullable: true
           type: string
           description: Check-in start time in format hh:mm, in the hotel timezone.
-          example: '14:00'
+          example: "14:00"
         check_in_before_time:
           nullable: true
           type: string
           description: Check-in end time in format hh:mm, in the hotel timezone.
-          example: '18:00'
+          example: "18:00"
         check_out_time:
           nullable: true
           type: string
           description: Check-out time in format hh:mm, in the hotel timezone.
-          example: '12:00'
+          example: "12:00"
         images:
           nullable: true
           type: array
           items:
-            $ref: '#/components/schemas/Image'
+            $ref: "#/components/schemas/Image"
           example:
             - category: Lobby
               url: >-
@@ -678,12 +685,12 @@ components:
           nullable: true
           type: array
           items:
-            $ref: '#/components/schemas/RoomStatic'
+            $ref: "#/components/schemas/RoomStatic"
         extras:
           nullable: true
           type: array
           items:
-            $ref: '#/components/schemas/Extra'
+            $ref: "#/components/schemas/Extra"
     RoomStatic:
       type: object
       required:
@@ -721,7 +728,7 @@ components:
             properties:
               id:
                 type: string
-                example: '123'
+                example: "123"
                 maxLength: 64
               name:
                 type: string
@@ -747,7 +754,7 @@ components:
           nullable: true
           type: array
           items:
-            $ref: '#/components/schemas/Image'
+            $ref: "#/components/schemas/Image"
           example:
             - category: Bathroom
               url: >-
@@ -797,7 +804,7 @@ components:
         name: Super all-inclusive
     BaseSearchRequest:
       allOf:
-        - $ref: '#/components/schemas/StayRange'
+        - $ref: "#/components/schemas/StayRange"
         - required:
             - check_in
             - check_out
@@ -814,7 +821,7 @@ components:
               description: Each element represents guests of one room.
               type: array
               items:
-                $ref: '#/components/schemas/GuestGroup'
+                $ref: "#/components/schemas/GuestGroup"
     StayRange:
       type: object
       properties:
@@ -822,12 +829,12 @@ components:
           description: Check-in date.
           type: string
           format: date
-          example: '2022-09-21'
+          example: "2022-09-21"
         check_out:
           description: Check-out date.
           type: string
           format: date
-          example: '2022-09-29'
+          example: "2022-09-29"
     GuestGroup:
       type: object
       required:
@@ -850,11 +857,11 @@ components:
         - hotel_id
       properties:
         hotel_id:
-          $ref: '#/components/schemas/HotelID'
+          $ref: "#/components/schemas/HotelID"
         rates:
           type: array
           items:
-            $ref: '#/components/schemas/Rate'
+            $ref: "#/components/schemas/Rate"
     Rate:
       type: object
       required:
@@ -865,7 +872,7 @@ components:
         - rooms
       properties:
         id:
-          $ref: '#/components/schemas/RateID'
+          $ref: "#/components/schemas/RateID"
         price:
           description: >-
             Total price of the whole rate including everything as possible (all
@@ -950,7 +957,7 @@ components:
           description: A list of meal types included in the rate.
           type: array
           items:
-            $ref: '#/components/schemas/Meal'
+            $ref: "#/components/schemas/Meal"
           example:
             - id: full-board
               name: Breakfast, lunch and dinner included
@@ -970,15 +977,15 @@ components:
                 description: Timestamp in UTC timezone when this policy is applied.
                 type: string
                 format: date-time
-                example: '2022-09-02T15:00:05Z'
+                example: "2022-09-02T15:00:05Z"
               amount:
                 description: Cancellation policy fee in the currency of the rate.
                 type: number
                 example: 56.7
           example:
-            - from: '2022-09-02T15:00:05Z'
+            - from: "2022-09-02T15:00:05Z"
               amount: 56.7
-            - from: '2022-09-21T15:00:05Z'
+            - from: "2022-09-21T15:00:05Z"
               amount: 234.76
         rooms:
           description: >-
@@ -986,7 +993,7 @@ components:
             same as the number of requested guest groups)
           type: array
           items:
-            $ref: '#/components/schemas/Room'
+            $ref: "#/components/schemas/Room"
     Room:
       type: object
       required:
@@ -1015,7 +1022,7 @@ components:
               name:
                 type: string
           example:
-            - id: '123'
+            - id: "123"
               name: double + twin
         allotment:
           description: Number of available rooms in the hotel via this rate.
@@ -1037,7 +1044,7 @@ components:
             Guests in a room. At least one guest per room should be present in
             the request. This guest will be a room holder for this booking.
           items:
-            $ref: '#/components/schemas/Guest'
+            $ref: "#/components/schemas/Guest"
     Guest:
       type: object
       required:
@@ -1065,7 +1072,7 @@ components:
           example: support@emergingtravel.com
         phone:
           type: string
-          example: '+74992156525'
+          example: "+74992156525"
     HotelID:
       type: string
       maxLength: 64
@@ -1098,7 +1105,7 @@ components:
             response.
           example: CF343D9C-0466-4DE2-8D93-9BA7A3738527
         client_reference_id:
-          $ref: '#/components/schemas/ClientReferenceID'
+          $ref: "#/components/schemas/ClientReferenceID"
     ReservationCodesRS:
       type: object
       required:
@@ -1111,7 +1118,7 @@ components:
           maxLength: 64
           example: CF343D9C-0466-4DE2-8D93-9BA7A3738527
         client_reference_id:
-          $ref: '#/components/schemas/ClientReferenceID'
+          $ref: "#/components/schemas/ClientReferenceID"
         hotel_confirmation_code:
           type: string
           description: Hotel confirmation code.
@@ -1204,8 +1211,8 @@ components:
             children_ages:
               - 6
               - 8
-        check_in: '2022-09-21'
-        check_out: '2022-09-29'
+        check_in: "2022-09-21"
+        check_out: "2022-09-29"
     MultiroomSearchRequest:
       summary: multiroom
       value:
@@ -1220,8 +1227,8 @@ components:
           - adults: 1
             children_ages:
               - 8
-        check_in: '2022-09-21'
-        check_out: '2022-09-29'
+        check_in: "2022-09-21"
+        check_out: "2022-09-29"
     SignleroomSearchResponse:
       summary: singleroom
       value:
@@ -1235,7 +1242,7 @@ components:
               - id: 0c9b1576-7db2-4546-bb76-4de0f9fb5ae2
                 name: Sea View Room
                 bed_groups:
-                  - id: '123'
+                  - id: "123"
                     name: double + twin
                 allotment: 4
     MultiroomSearchResponse:
@@ -1251,13 +1258,13 @@ components:
               - id: 0c9b1576-7db2-4546-bb76-4de0f9fb5ae2
                 name: Sea View Room
                 bed_groups:
-                  - id: '123'
+                  - id: "123"
                     name: double + twin
                 allotment: 4
               - id: 0c9b1576-7db2-4546-bb76-4de0f9fb5ae2
                 name: DoubleRoom
                 bed_groups:
-                  - id: '345'
+                  - id: "345"
                     name: twin
                 allotment: 2
     SingleroomBookRequest:
@@ -1269,29 +1276,29 @@ components:
         reservation_holder:
           first_name: James
           last_name: Smith
-          is_child: 'false'
+          is_child: "false"
         contact_info:
           email: support@emergingtravel.com
-          phone: '+74992156525'
-        price: '234.76'
+          phone: "+74992156525"
+        price: "234.76"
         payment:
           card_brand: Visa
-          number: '1234567890123457'
+          number: "1234567890123457"
           holder: James Smith
-          expiration_date: '0422'
-          security_code: '123'
+          expiration_date: "0422"
+          security_code: "123"
         rooms:
           - id: 0c9b1576-7db2-4546-bb76-4de0f9fb5ae2
             guests:
               - first_name: James
                 last_name: Smith
-                is_child: 'false'
+                is_child: "false"
               - first_name: John
                 last_name: Smith
-                is_child: 'true'
+                is_child: "true"
               - first_name: Jade
                 last_name: Smith
-                is_child: 'true'
+                is_child: "true"
         comments: Non-smoking room, first floor.
     MultiroomBookRequest:
       summary: multiroom
@@ -1302,40 +1309,40 @@ components:
         reservation_holder:
           first_name: James
           last_name: Smith
-          is_child: 'false'
+          is_child: "false"
         contact_info:
           email: support@emergingtravel.com
-          phone: '+74992156525'
-        price: '234.76'
+          phone: "+74992156525"
+        price: "234.76"
         payment:
           card_brand: Visa
-          number: '1234567890123457'
+          number: "1234567890123457"
           holder: James Smith
-          expiration_date: '0422'
-          security_code: '123'
+          expiration_date: "0422"
+          security_code: "123"
         rooms:
-          - id: '22237562'
+          - id: "22237562"
             guests:
               - first_name: John
                 last_name: Smith
-                is_child: 'false'
+                is_child: "false"
               - first_name: Jade
                 last_name: Smith
-                is_child: 'false'
+                is_child: "false"
               - first_name: John
                 last_name: Smith
-                is_child: 'true'
+                is_child: "true"
               - first_name: Jade
                 last_name: Smith
-                is_child: 'true'
+                is_child: "true"
           - id: 0c9b1576-7db2-4546-bb76-4de0f9fb5ae2
             guests:
               - first_name: James
                 last_name: Jones
-                is_child: 'false'
+                is_child: "false"
               - first_name: John
                 last_name: Jones
-                is_child: 'true'
+                is_child: "true"
         comments: Non-smoking room, first floor.
     SingleroomBookResponse:
       summary: singleroom
@@ -1354,35 +1361,35 @@ components:
     InvalidDates:
       summary: Invalid dates in the request.
       value:
-        code: 4
+        code: 1001
         message: Check-out is before check-in.
     InvalidResidency:
       summary: Invalid residency in the request.
       value:
-        code: 5
+        code: 4000
         message: Residency EN does not exists.
     InvalidGuests:
       summary: Invalid guest list in the request.
       value:
-        code: 6
+        code: 4000
         message: There should be at least one adult in the room.
     ExceededAdultsCount:
       summary: Too many adults.
       value:
-        code: 6
+        code: 4000
         message: The amount of adults exceeds the maximum acceptable value per room.
     ExceededChildrenCount:
       summary: Too many children.
       value:
-        code: 6
+        code: 4000
         message: The amount of children exceeds the maximum acceptable value per room.
     ExceededRooms:
       summary: Too many rooms.
       value:
-        code: 6
+        code: 4000
         message: The amount of rooms exceeds the maximum acceptable value.
     HotelNotFound:
       summary: Hotel doesn't exist.
       value:
-        code: 1
+        code: 1000
         message: The specified hotel does not exist in the system.
